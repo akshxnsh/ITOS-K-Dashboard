@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>IT Asset Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Kharkhoda</p>
+          <h1>IT Asset Dashboard</h1>
+        </div>
+        <div class="privacy-badge" title="This dashboard runs fully in your browser.">
+          <span class="status-dot"></span>
+          Local only
+        </div>
+      </header>
+
+      <main>
+        <section class="control-strip" aria-label="Data import and search">
+          <div class="import-panel">
+            <label class="file-picker">
+              <input id="fileInput" type="file" accept=".xlsx,.xls,.csv">
+              <span class="file-picker-title">Import Excel or CSV</span>
+              <span class="file-picker-meta">.xlsx, .xls, .csv</span>
+            </label>
+            <div id="importStatus" class="import-status" role="status">
+              <strong>No data file loaded</strong>
+              <span>Select an Excel or CSV file to begin.</span>
+            </div>
+          </div>
+
+          <form id="searchForm" class="search-panel" autocomplete="off">
+            <label for="assetCodeInput">Asset Code</label>
+            <div class="search-row">
+              <input id="assetCodeInput" name="assetCode" type="search" placeholder="Exact asset code" disabled>
+              <button id="searchButton" type="submit" disabled>Search</button>
+            </div>
+            <p id="searchMessage" class="field-message" role="status"></p>
+          </form>
+        </section>
+
+        <section id="alertHost" class="alert-host" aria-live="polite"></section>
+
+        <section class="summary-grid" aria-label="Dashboard summary">
+          <div class="metric-panel">
+            <div class="metric-topline">
+              <span class="metric-label">Total Assets</span>
+              <span class="metric-icon metric-icon-assets" aria-hidden="true"></span>
+            </div>
+            <strong id="totalAssets">0</strong>
+            <span id="fileMeta" class="metric-caption">Filtered inventory</span>
+          </div>
+          <div class="metric-panel">
+            <div class="metric-topline">
+              <span class="metric-label">Categories</span>
+              <span class="metric-icon metric-icon-categories" aria-hidden="true"></span>
+            </div>
+            <strong id="categoryTotal">0</strong>
+            <span id="worksheetMeta" class="metric-caption">Unique categories</span>
+          </div>
+        </section>
+
+        <section id="dashboardView" class="view is-active" aria-label="Category dashboard">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Dashboard</p>
+              <h2>In-Stock Assets by Category</h2>
+            </div>
+            <button id="categoryFullscreenButton" class="icon-button fullscreen-button" type="button" aria-label="Expand category section" title="Expand category section">
+              <svg class="icon-expand" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M8 4H4v4M16 4h4v4M4 16v4h4M20 16v4h-4"></path>
+              </svg>
+              <svg class="icon-collapse" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"></path>
+              </svg>
+            </button>
+          </div>
+          <div id="categoryGrid" class="category-grid">
+            <div class="empty-state">
+              <strong>Ready for import</strong>
+              <span>Kharkhoda category cards will appear here.</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="detailView" class="view" aria-label="Category details">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Category Details</p>
+              <h2 id="detailTitle">Category</h2>
+            </div>
+            <button id="backToDashboard" class="secondary-button" type="button">Back</button>
+          </div>
+          <div id="usageGrid" class="usage-grid"></div>
+        </section>
+
+        <section id="assetView" class="view" aria-label="Asset details">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Asset Details</p>
+              <h2 id="assetTitle">Asset</h2>
+            </div>
+            <button id="backFromAsset" class="secondary-button" type="button">Back</button>
+          </div>
+          <div id="assetDetails" class="asset-details"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="vendor/xlsx.full.min.js"></script>
+    <script src="excel-processor.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
