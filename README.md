@@ -1,4 +1,4 @@
-# IT Asset Dashboard
+# ITOS-K Dashboard
 
 Fully local, browser-based dashboard for Kharkhoda IT asset analysis.
 
