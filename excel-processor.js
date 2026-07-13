@@ -43,8 +43,7 @@
   };
 
   var IN_STOCK_USER_NAMES = {
-    "K/PATHAK MRITYUNJAY KUMAR": true,
-    "JET2(ITOS-K)": true
+    "K/PATHAK MRITYUNJAY KUMAR, JET2(ITOS-K)": true
   };
   var HEADER_SCAN_ROWS = 50;
   var SUPPORTED_EXTENSIONS = {
@@ -250,10 +249,14 @@
     return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
   }
 
+  function normalizeUserName(value) {
+    return cellText(value).trim().replace(/\s+/g, " ").toUpperCase();
+  }
+
   function isInStockRow(row) {
     if (KHARKHODA_STORES[row.assetStore] !== true) return false;
 
-    var userName = cellText(row.userName).trim().toUpperCase();
+    var userName = normalizeUserName(row.userName);
     return IN_STOCK_USER_NAMES[userName] === true;
   }
 
