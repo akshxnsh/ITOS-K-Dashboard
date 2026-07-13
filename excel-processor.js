@@ -28,6 +28,12 @@
       displayName: "Asset Usage",
       aliases: ["Asset Usage", "cr9a7_assetusage"],
       optional: true
+    },
+    {
+      key: "imacStatus",
+      displayName: "IMAC Status",
+      aliases: ["IMAC Status"],
+      optional: true
     }
   ];
 
@@ -170,6 +176,11 @@
 
       if (!best || detection.present > best.present) best = detection;
       if (detection.missing.length === 0) return detection;
+
+      var hasRequiredBaseColumns = detection.missing.filter(function filterMissing(name) {
+        return name !== "IMAC Status";
+      }).length === 0;
+      if (hasRequiredBaseColumns && detection.fieldMap.imacStatus) return detection;
     }
 
     return best;
@@ -202,7 +213,12 @@
     });
 
     if (!best || best.missing.length > 0) {
-      throw missingColumnError(best ? best.missing : REQUIRED_COLUMNS.slice());
+      var requiredMissing = best ? best.missing.filter(function filterMissing(name) {
+        return name !== "IMAC Status";
+      }) : REQUIRED_COLUMNS.slice();
+      if (requiredMissing.length > 0) {
+        throw missingColumnError(requiredMissing);
+      }
     }
 
     return best;
@@ -236,7 +252,8 @@
       assetCode: cellText(row[fieldMap.assetCode.sourceColumn]),
       assetStore: cellText(row[fieldMap.assetStore.sourceColumn]),
       userName: fieldMap.userName ? cellText(row[fieldMap.userName.sourceColumn]) : "",
-      assetUsage: fieldMap.assetUsage ? cellText(row[fieldMap.assetUsage.sourceColumn]) : ""
+      assetUsage: fieldMap.assetUsage ? cellText(row[fieldMap.assetUsage.sourceColumn]) : "",
+      imacStatus: fieldMap.imacStatus ? cellText(row[fieldMap.imacStatus.sourceColumn]) : ""
     };
   }
 
@@ -260,10 +277,19 @@
     return IN_STOCK_USER_NAMES[userName] === true;
   }
 
+  function shouldIncludeRow(row) {
+    if (KHARKHODA_STORES[row.assetStore] !== true) return false;
+
+    var userName = normalizeUserName(row.userName);
+    return IN_STOCK_USER_NAMES[userName] === true;
+  }
+
   function buildIndexes(rows, fieldMap, onProgress) {
     var categoryMap = new Map();
+    var imacCategoryMap = new Map();
     var assetByCode = new Map();
     var kharkhodaCount = 0;
+    var imacRowCount = 0;
     var lastProgress = 0;
 
     makeProgress(onProgress, "index", 0.45, "Building indexes");
@@ -290,6 +316,29 @@
 
         categoryEntry.totalCount += 1;
         if (isInStockRow(row)) categoryEntry.inStockCount += 1;
+
+        if (shouldIncludeRow(row)) {
+          imacRowCount += 1;
+          var imacCategoryEntry = imacCategoryMap.get(categoryName);
+          if (!imacCategoryEntry) {
+            imacCategoryEntry = {
+              key: categoryName,
+              name: displayName(categoryName, "(Blank Category)"),
+              completedCount: 0,
+              pendingCount: 0,
+              totalCount: 0
+            };
+            imacCategoryMap.set(categoryName, imacCategoryEntry);
+          }
+
+          imacCategoryEntry.totalCount += 1;
+          var normalizedImacStatus = cellText(row.imacStatus).trim().toUpperCase();
+          if (normalizedImacStatus === "COMPLETED") {
+            imacCategoryEntry.completedCount += 1;
+          } else if (normalizedImacStatus === "PENDING") {
+            imacCategoryEntry.pendingCount += 1;
+          }
+        }
 
         var assetCodeKey = normalizeAssetCodeKey(row.assetCode);
         if (assetCodeKey !== "") {
@@ -325,10 +374,22 @@
       };
     }).sort(sortByName);
 
+    var imacCategories = Array.from(imacCategoryMap.values()).map(function mapImacCategory(entry) {
+      return {
+        key: entry.key,
+        name: entry.name,
+        completedCount: entry.completedCount,
+        pendingCount: entry.pendingCount,
+        totalCount: entry.totalCount
+      };
+    }).sort(sortByName);
+
     return {
       categories: categories,
       kharkhodaCount: kharkhodaCount,
-      assetByCode: assetByCode
+      assetByCode: assetByCode,
+      imacCategories: imacCategories,
+      imacRowCount: imacRowCount
     };
   }
 
@@ -369,7 +430,16 @@
         sourceRowCount: rows.length,
         kharkhodaCount: indexes.kharkhodaCount,
         categoryCount: indexes.categories.length,
-        categories: indexes.categories
+        categories: indexes.categories,
+        imacSummary: {
+          fileName: fileName,
+          fileType: fileType,
+          sheetName: detected.sheetName,
+          headerRow: detected.headerRow + 1,
+          kharkhodaCount: indexes.imacRowCount,
+          categoryCount: indexes.imacCategories.length,
+          categories: indexes.imacCategories
+        }
       },
       index: {
         assetByCode: indexes.assetByCode

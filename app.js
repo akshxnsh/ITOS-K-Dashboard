@@ -27,8 +27,12 @@
     categoryGrid: document.getElementById("categoryGrid"),
     dashboardView: document.getElementById("dashboardView"),
     categoryFullscreenButton: document.getElementById("categoryFullscreenButton"),
+    imacButton: document.getElementById("imacButton"),
+    imacView: document.getElementById("imacView"),
+    imacCategoryGrid: document.getElementById("imacCategoryGrid"),
     assetView: document.getElementById("assetView"),
     backFromAsset: document.getElementById("backFromAsset"),
+    backToDashboardFromImac: document.getElementById("backToDashboardFromImac"),
     searchForm: document.getElementById("searchForm"),
     assetCodeInput: document.getElementById("assetCodeInput"),
     searchButton: document.getElementById("searchButton"),
@@ -80,6 +84,7 @@
 
   function showView(viewName) {
     els.dashboardView.classList.toggle("is-active", viewName === "dashboard");
+    els.imacView.classList.toggle("is-active", viewName === "imac");
     els.assetView.classList.toggle("is-active", viewName === "asset");
   }
 
@@ -117,7 +122,9 @@
     els.fileMeta.textContent = "Filtered inventory";
     els.worksheetMeta.textContent = "Unique categories";
     els.categoryGrid.innerHTML = '<div class="empty-state"><strong>Ready for import</strong><span>Kharkhoda category cards will appear here.</span></div>';
+    els.imacCategoryGrid.innerHTML = '<div class="empty-state"><strong>Ready for import</strong><span>IMAC category cards will appear here.</span></div>';
     els.assetDetails.innerHTML = "";
+    els.imacButton.disabled = true;
     els.searchMessage.textContent = "";
     document.body.classList.remove("has-data");
     setSearchEnabled(false);
@@ -156,7 +163,35 @@
     setImportStatus("Data loaded", "");
     setAlert("");
     document.body.classList.add("has-data");
+    els.imacButton.disabled = false;
+    renderImacSummary(summary);
     showView("dashboard");
+  }
+
+  function renderImacSummary(summary) {
+    var imacSummary = summary && summary.imacSummary ? summary.imacSummary : null;
+
+    if (!imacSummary || imacSummary.kharkhodaCount === 0) {
+      els.imacCategoryGrid.innerHTML = '<div class="empty-state"><strong>No IMAC matching rows found</strong><span>Check the selected file and try again.</span></div>';
+    } else if (imacSummary.categories.length === 0) {
+      els.imacCategoryGrid.innerHTML = '<div class="empty-state"><strong>No categories found</strong><span>The loaded IMAC rows have no category values.</span></div>';
+    } else {
+      els.imacCategoryGrid.innerHTML = imacSummary.categories.map(function renderImacCard(category) {
+        return [
+          '<article class="category-card">',
+          '<h3>' + escapeHtml(category.name) + '</h3>',
+          '<div class="card-metric">',
+          '<div><strong>' + formatNumber(category.completedCount) + '</strong></div>',
+          '<span>Completed</span>',
+          '</div>',
+          '<div class="card-metric">',
+          '<div><strong>' + formatNumber(category.pendingCount) + '</strong></div>',
+          '<span>Pending</span>',
+          '</div>',
+          '</article>'
+        ].join("");
+      }).join("");
+    }
   }
 
   function renderAssetDetails(searchResult) {
@@ -342,7 +377,16 @@
     importFile(event.target.files && event.target.files[0]);
   });
 
+  els.imacButton.addEventListener("click", function handleImacButtonClick() {
+    renderImacSummary(state.summary);
+    showView("imac");
+  });
+
   els.backFromAsset.addEventListener("click", function goBackFromAsset() {
+    showView("dashboard");
+  });
+
+  els.backToDashboardFromImac.addEventListener("click", function goBackToDashboard() {
     showView("dashboard");
   });
 
