@@ -53,6 +53,10 @@
     xlsx: "Excel"
   };
 
+  function isSupportedFileType(extension) {
+    return Boolean(SUPPORTED_EXTENSIONS[extension]);
+  }
+
   function cellText(value) {
     if (value === null || value === undefined) return "";
     return String(value);
@@ -82,7 +86,7 @@
 
   function getFileType(fileName) {
     var extension = getExtension(fileName);
-    if (!SUPPORTED_EXTENSIONS[extension]) {
+    if (!isSupportedFileType(extension)) {
       throw new Error("Unsupported file type. Import a .xlsx, .xls, or .csv file.");
     }
     return SUPPORTED_EXTENSIONS[extension];
