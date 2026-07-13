@@ -39,10 +39,14 @@ The accepted source schema is normalized internally into one common model before
 
 Only records with `Asset Store` exactly equal to `Kharkhoda Store` or `Kharkhoda New Asset Store` are included. Both values are treated as one logical Kharkhoda dataset.
 
+The dashboard no longer uses `Asset Usage` to determine stock status. Instead, it counts an asset as in stock only when the `User Name` value is exactly one of the accepted names and the record is in the Kharkhoda dataset:
+
+- `K/Pathak Mrityunjay Kumar`
+- `JET2(ITOS-K)`
+
 During import, the processor builds in-memory indexes:
 
-- Category map for total category records and `In Stock(STK)` counts.
-- Per-category usage maps for drill-down counts.
+- Category map for total category records and in-stock counts.
 - Asset Code lookup map for exact-code search.
 
 The UI uses those maps instead of repeatedly scanning workbook rows.

@@ -18,13 +18,22 @@
       aliases: ["Asset Store", "cr9a7_assetstore"]
     },
     {
+      key: "userName",
+      displayName: "User Name",
+      aliases: ["User Name"],
+      optional: true
+    },
+    {
       key: "assetUsage",
       displayName: "Asset Usage",
-      aliases: ["Asset Usage", "cr9a7_assetusage"]
+      aliases: ["Asset Usage", "cr9a7_assetusage"],
+      optional: true
     }
   ];
 
-  var REQUIRED_COLUMNS = FIELD_DEFINITIONS.map(function mapDisplayName(field) {
+  var REQUIRED_COLUMNS = FIELD_DEFINITIONS.filter(function isRequired(field) {
+    return !field.optional;
+  }).map(function mapDisplayName(field) {
     return field.displayName;
   });
 
@@ -33,7 +42,10 @@
     "Kharkhoda New Asset Store": true
   };
 
-  var IN_STOCK_USAGE = "In Stock(STK)";
+  var IN_STOCK_USER_NAMES = {
+    "K/PATHAK MRITYUNJAY KUMAR": true,
+    "JET2(ITOS-K)": true
+  };
   var HEADER_SCAN_ROWS = 50;
   var SUPPORTED_EXTENSIONS = {
     csv: "CSV",
@@ -112,7 +124,7 @@
     FIELD_DEFINITIONS.forEach(function mapField(field) {
       var index = findSourceColumn(columns, field.aliases);
       if (index === -1) {
-        missing.push(field.displayName);
+        if (!field.optional) missing.push(field.displayName);
         return;
       }
 
@@ -220,7 +232,8 @@
       categoryName: cellText(row[fieldMap.categoryName.sourceColumn]),
       assetCode: cellText(row[fieldMap.assetCode.sourceColumn]),
       assetStore: cellText(row[fieldMap.assetStore.sourceColumn]),
-      assetUsage: cellText(row[fieldMap.assetUsage.sourceColumn])
+      userName: fieldMap.userName ? cellText(row[fieldMap.userName.sourceColumn]) : "",
+      assetUsage: fieldMap.assetUsage ? cellText(row[fieldMap.assetUsage.sourceColumn]) : ""
     };
   }
 
@@ -231,6 +244,13 @@
   function sortUsage(a, b) {
     if (b.count !== a.count) return b.count - a.count;
     return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+  }
+
+  function isInStockRow(row) {
+    if (KHARKHODA_STORES[row.assetStore] !== true) return false;
+
+    var userName = cellText(row.userName).trim().toUpperCase();
+    return IN_STOCK_USER_NAMES[userName] === true;
   }
 
   function buildIndexes(rows, fieldMap, onProgress) {
@@ -249,7 +269,6 @@
         kharkhodaCount += 1;
 
         var categoryName = row.categoryName;
-        var usageName = row.assetUsage;
         var categoryEntry = categoryMap.get(categoryName);
 
         if (!categoryEntry) {
@@ -257,15 +276,13 @@
             key: categoryName,
             name: displayName(categoryName, "(Blank Category)"),
             totalCount: 0,
-            inStockCount: 0,
-            usageMap: new Map()
+            inStockCount: 0
           };
           categoryMap.set(categoryName, categoryEntry);
         }
 
         categoryEntry.totalCount += 1;
-        if (usageName === IN_STOCK_USAGE) categoryEntry.inStockCount += 1;
-        categoryEntry.usageMap.set(usageName, (categoryEntry.usageMap.get(usageName) || 0) + 1);
+        if (isInStockRow(row)) categoryEntry.inStockCount += 1;
 
         var assetCodeKey = normalizeAssetCodeKey(row.assetCode);
         if (assetCodeKey !== "") {
@@ -297,13 +314,7 @@
         name: entry.name,
         totalCount: entry.totalCount,
         inStockCount: entry.inStockCount,
-        usageCounts: Array.from(entry.usageMap.entries()).map(function mapUsage(pair) {
-          return {
-            key: pair[0],
-            name: displayName(pair[0], "(Blank Usage)"),
-            count: pair[1]
-          };
-        }).sort(sortUsage)
+        usageCounts: []
       };
     }).sort(sortByName);
 

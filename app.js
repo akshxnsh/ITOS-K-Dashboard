@@ -6,8 +6,7 @@
     worker: null,
     fallbackIndex: null,
     usingWorker: false,
-    searchRequestId: 0,
-    lastCategoryKey: null
+    searchRequestId: 0
   };
 
   var COLUMN_LABELS = {
@@ -28,11 +27,7 @@
     categoryGrid: document.getElementById("categoryGrid"),
     dashboardView: document.getElementById("dashboardView"),
     categoryFullscreenButton: document.getElementById("categoryFullscreenButton"),
-    detailView: document.getElementById("detailView"),
     assetView: document.getElementById("assetView"),
-    detailTitle: document.getElementById("detailTitle"),
-    usageGrid: document.getElementById("usageGrid"),
-    backToDashboard: document.getElementById("backToDashboard"),
     backFromAsset: document.getElementById("backFromAsset"),
     searchForm: document.getElementById("searchForm"),
     assetCodeInput: document.getElementById("assetCodeInput"),
@@ -85,7 +80,6 @@
 
   function showView(viewName) {
     els.dashboardView.classList.toggle("is-active", viewName === "dashboard");
-    els.detailView.classList.toggle("is-active", viewName === "detail");
     els.assetView.classList.toggle("is-active", viewName === "asset");
   }
 
@@ -118,13 +112,11 @@
   function resetDashboard() {
     state.summary = null;
     state.fallbackIndex = null;
-    state.lastCategoryKey = null;
     els.totalAssets.textContent = "0";
     els.categoryTotal.textContent = "0";
     els.fileMeta.textContent = "Filtered inventory";
     els.worksheetMeta.textContent = "Unique categories";
     els.categoryGrid.innerHTML = '<div class="empty-state"><strong>Ready for import</strong><span>Kharkhoda category cards will appear here.</span></div>';
-    els.usageGrid.innerHTML = "";
     els.assetDetails.innerHTML = "";
     els.searchMessage.textContent = "";
     document.body.classList.remove("has-data");
@@ -148,14 +140,14 @@
         var isOutOfStock = category.inStockCount === 0;
         var cardClass = isOutOfStock ? "category-card is-out-of-stock" : "category-card";
         return [
-          '<button class="' + cardClass + '" type="button" data-category-key="' + escapeHtml(category.key) + '">',
+          '<article class="' + cardClass + '">',
           isOutOfStock ? '<span class="stock-badge">Out of stock</span>' : "",
           '<h3>' + escapeHtml(category.name) + "</h3>",
           '<div class="card-metric">',
           '<div><strong>' + formatNumber(category.inStockCount) + "</strong></div>",
           isOutOfStock ? "" : "<span>In Stock</span>",
           "</div>",
-          "</button>"
+          "</article>"
         ].join("");
       }).join("");
     }
@@ -165,41 +157,6 @@
     setAlert("");
     document.body.classList.add("has-data");
     showView("dashboard");
-  }
-
-  function getCategory(categoryKey) {
-    if (!state.summary) return null;
-    return state.summary.categories.find(function findCategory(category) {
-      return category.key === categoryKey;
-    });
-  }
-
-  function renderCategoryDetail(categoryKey) {
-    var category = getCategory(categoryKey);
-    if (!category) return;
-
-    if (isCategoryFullscreen()) {
-      document.exitFullscreen().catch(function ignoreFullscreenExitError() {});
-    }
-
-    state.lastCategoryKey = categoryKey;
-    els.detailTitle.textContent = category.name;
-
-    if (category.usageCounts.length === 0) {
-      els.usageGrid.innerHTML = '<div class="empty-state"><strong>No usage values</strong><span>This category has no usage data.</span></div>';
-    } else {
-      els.usageGrid.innerHTML = category.usageCounts.map(function renderUsage(usage) {
-        return [
-          '<article class="usage-card">',
-          '<p class="usage-label">Asset Usage</p>',
-          '<h3 class="usage-name">' + escapeHtml(usage.name) + "</h3>",
-          '<strong class="usage-count">' + formatNumber(usage.count) + "</strong>",
-          "</article>"
-        ].join("");
-      }).join("");
-    }
-
-    showView("detail");
   }
 
   function renderAssetDetails(searchResult) {
@@ -385,22 +342,8 @@
     importFile(event.target.files && event.target.files[0]);
   });
 
-  els.categoryGrid.addEventListener("click", function handleCategoryClick(event) {
-    var card = event.target.closest("[data-category-key]");
-    if (!card) return;
-    renderCategoryDetail(card.getAttribute("data-category-key"));
-  });
-
-  els.backToDashboard.addEventListener("click", function goBack() {
-    showView("dashboard");
-  });
-
   els.backFromAsset.addEventListener("click", function goBackFromAsset() {
-    if (state.lastCategoryKey) {
-      showView("detail");
-    } else {
-      showView("dashboard");
-    }
+    showView("dashboard");
   });
 
   els.categoryFullscreenButton.addEventListener("click", function handleFullscreenClick() {
