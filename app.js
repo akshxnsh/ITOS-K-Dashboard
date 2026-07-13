@@ -25,6 +25,8 @@
     fileMeta: document.getElementById("fileMeta"),
     worksheetMeta: document.getElementById("worksheetMeta"),
     categoryGrid: document.getElementById("categoryGrid"),
+    vendorSection: document.getElementById("vendorSection"),
+    vendorGrid: document.getElementById("vendorGrid"),
     dashboardView: document.getElementById("dashboardView"),
     categoryFullscreenButton: document.getElementById("categoryFullscreenButton"),
     imacButton: document.getElementById("imacButton"),
@@ -122,6 +124,7 @@
     els.fileMeta.textContent = "Filtered inventory";
     els.worksheetMeta.textContent = "Unique categories";
     els.categoryGrid.innerHTML = '<div class="empty-state"><strong>Ready for import</strong><span>Kharkhoda category cards will appear here.</span></div>';
+    els.vendorGrid.innerHTML = '<div class="empty-state"><strong>No vendor data yet</strong><span>Vendor cards appear here in fullscreen.</span></div>';
     els.imacCategoryGrid.innerHTML = '<div class="empty-state"><strong>Ready for import</strong><span>IMAC category cards will appear here.</span></div>';
     els.assetDetails.innerHTML = "";
     els.imacButton.disabled = true;
@@ -143,18 +146,42 @@
     } else if (summary.categories.length === 0) {
       els.categoryGrid.innerHTML = '<div class="empty-state"><strong>No categories found</strong><span>The loaded Kharkhoda records have no category values.</span></div>';
     } else {
+      var imacCategoryMap = {};
+      if (summary.imacSummary && summary.imacSummary.categories) {
+        summary.imacSummary.categories.forEach(function mapImacCategory(imacCategory) {
+          var key = imacCategory.key || imacCategory.name || "";
+          if (key) {
+            imacCategoryMap[key] = imacCategory;
+          }
+        });
+      }
+
       els.categoryGrid.innerHTML = summary.categories.map(function renderCard(category) {
         var isOutOfStock = category.inStockCount === 0;
         var cardClass = isOutOfStock ? "category-card is-out-of-stock" : "category-card";
+        var imacCategory = imacCategoryMap[category.key] || imacCategoryMap[category.name] || null;
+        var completedCount = imacCategory ? imacCategory.completedCount : 0;
+        var pendingCount = imacCategory ? imacCategory.pendingCount : 0;
+
         return [
           '<article class="' + cardClass + '">',
           isOutOfStock ? '<span class="stock-badge">Out of stock</span>' : "",
           '<h3>' + escapeHtml(category.name) + "</h3>",
-          '<div class="card-metric">',
-          '<div><strong>' + formatNumber(category.inStockCount) + "</strong></div>",
-          isOutOfStock ? "" : "<span>In Stock</span>",
-          "</div>",
-          "</article>"
+          '<div class="metric-grid">',
+          '<div class="metric-pill is-in-stock">',
+          '<strong>' + formatNumber(category.inStockCount) + '</strong>',
+          '<span>In Stock</span>',
+          '</div>',
+          '<div class="metric-pill">',
+          '<strong>' + formatNumber(completedCount) + '</strong>',
+          '<span>Comp</span>',
+          '</div>',
+          '<div class="metric-pill">',
+          '<strong>' + formatNumber(pendingCount) + '</strong>',
+          '<span>Pend</span>',
+          '</div>',
+          '</div>',
+          '</article>'
         ].join("");
       }).join("");
     }
@@ -165,7 +192,37 @@
     document.body.classList.add("has-data");
     els.imacButton.disabled = false;
     renderImacSummary(summary);
+    renderVendorSummary(summary);
     showView("dashboard");
+  }
+
+  function renderVendorSummary(summary) {
+    var vendorSummary = summary && summary.vendorSummary ? summary.vendorSummary : null;
+    var isFullscreen = document.fullscreenElement === els.dashboardView;
+
+    if (!vendorSummary || !vendorSummary.categories || vendorSummary.categories.length === 0) {
+      els.vendorGrid.innerHTML = '<div class="empty-state"><strong>No vendor data yet</strong><span>Vendor cards appear here in fullscreen.</span></div>';
+      return;
+    }
+
+    els.vendorGrid.innerHTML = vendorSummary.categories.map(function renderVendorCard(vendor) {
+      var vendorName = vendor.name || "(Blank Vendor)";
+      return [
+        '<article class="vendor-card' + (isFullscreen ? ' is-visible' : '') + '">',
+        '<h3 title="' + escapeHtml(vendorName) + '">' + escapeHtml(vendorName) + '</h3>',
+        '<div class="vendor-metrics">',
+        '<div class="vendor-metric">',
+        '<strong>' + formatNumber(vendor.assetCount) + '</strong>',
+        '<span>Assets</span>',
+        '</div>',
+        '<div class="vendor-metric">',
+        '<strong>' + formatNumber(vendor.pendingCount) + '</strong>',
+        '<span>Pend</span>',
+        '</div>',
+        '</div>',
+        '</article>'
+      ].join("");
+    }).join("");
   }
 
   function renderImacSummary(summary) {

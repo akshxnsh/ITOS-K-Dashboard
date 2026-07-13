@@ -490,7 +490,7 @@ button:not(.category-card):not(.icon-button):hover:not(:disabled) {
 }
 
 #dashboardView:fullscreen .category-grid {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   align-content: start;
   grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
   gap: 12px;
@@ -498,6 +498,92 @@ button:not(.category-card):not(.icon-button):hover:not(:disabled) {
 
 #dashboardView:fullscreen .category-card {
   min-height: 118px;
+}
+
+#dashboardView:fullscreen .vendor-section {
+  display: block;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+#dashboardView:fullscreen .vendor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(176px, 1fr));
+  gap: 10px;
+  align-content: start;
+}
+
+#dashboardView:fullscreen .vendor-card {
+  min-height: 92px;
+  padding: 11px 12px;
+}
+
+.vendor-section {
+  display: none;
+}
+
+.vendor-section-heading {
+  margin-bottom: 8px;
+}
+
+.vendor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(176px, 1fr));
+  gap: 10px;
+}
+
+.vendor-card {
+  display: grid;
+  gap: 8px;
+  min-height: 92px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow-soft);
+}
+
+.vendor-card h3 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--navy);
+  font-size: 0.92rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vendor-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.vendor-metric {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-height: 44px;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: rgba(15, 118, 110, 0.04);
+}
+
+.vendor-metric strong {
+  color: var(--navy);
+  font-size: 0.98rem;
+  line-height: 1;
+}
+
+.vendor-metric span {
+  color: var(--muted);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .category-card,
@@ -584,6 +670,43 @@ button:not(.category-card):not(.icon-button):hover:not(:disabled) {
   color: var(--navy);
   font-size: 0.96rem;
   line-height: 1.28;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  align-self: end;
+}
+
+.metric-pill {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-height: 56px;
+  padding: 8px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: rgba(15, 118, 110, 0.04);
+}
+
+.metric-pill.is-in-stock {
+  background: rgba(4, 120, 87, 0.08);
+}
+
+.metric-pill strong {
+  color: var(--navy);
+  font-size: 1.05rem;
+  line-height: 1.1;
+}
+
+.metric-pill span {
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .card-metric {

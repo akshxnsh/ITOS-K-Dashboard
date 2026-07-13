@@ -24,6 +24,12 @@
       optional: true
     },
     {
+      key: "vendorName",
+      displayName: "Vendor Name",
+      aliases: ["Vendor Name"],
+      optional: true
+    },
+    {
       key: "assetUsage",
       displayName: "Asset Usage",
       aliases: ["Asset Usage", "cr9a7_assetusage"],
@@ -252,6 +258,7 @@
       assetCode: cellText(row[fieldMap.assetCode.sourceColumn]),
       assetStore: cellText(row[fieldMap.assetStore.sourceColumn]),
       userName: fieldMap.userName ? cellText(row[fieldMap.userName.sourceColumn]) : "",
+      vendorName: fieldMap.vendorName ? cellText(row[fieldMap.vendorName.sourceColumn]) : "",
       assetUsage: fieldMap.assetUsage ? cellText(row[fieldMap.assetUsage.sourceColumn]) : "",
       imacStatus: fieldMap.imacStatus ? cellText(row[fieldMap.imacStatus.sourceColumn]) : ""
     };
@@ -287,9 +294,11 @@
   function buildIndexes(rows, fieldMap, onProgress) {
     var categoryMap = new Map();
     var imacCategoryMap = new Map();
+    var vendorCategoryMap = new Map();
     var assetByCode = new Map();
     var kharkhodaCount = 0;
     var imacRowCount = 0;
+    var vendorRowCount = 0;
     var lastProgress = 0;
 
     makeProgress(onProgress, "index", 0.45, "Building indexes");
@@ -316,6 +325,24 @@
 
         categoryEntry.totalCount += 1;
         if (isInStockRow(row)) categoryEntry.inStockCount += 1;
+
+        if (isInStockRow(row)) {
+          vendorRowCount += 1;
+          var vendorName = displayName(row.vendorName, "(Blank Vendor)");
+          var vendorEntry = vendorCategoryMap.get(vendorName);
+          if (!vendorEntry) {
+            vendorEntry = {
+              key: vendorName,
+              name: vendorName,
+              assetCount: 0,
+              pendingCount: 0
+            };
+            vendorCategoryMap.set(vendorName, vendorEntry);
+          }
+          vendorEntry.assetCount += 1;
+          var normalizedImacStatus = cellText(row.imacStatus).trim().toUpperCase();
+          if (normalizedImacStatus === "PENDING") vendorEntry.pendingCount += 1;
+        }
 
         if (shouldIncludeRow(row)) {
           imacRowCount += 1;
@@ -384,12 +411,23 @@
       };
     }).sort(sortByName);
 
+    var vendorCategories = Array.from(vendorCategoryMap.values()).map(function mapVendorCategory(entry) {
+      return {
+        key: entry.key,
+        name: entry.name,
+        assetCount: entry.assetCount,
+        pendingCount: entry.pendingCount
+      };
+    }).sort(sortByName);
+
     return {
       categories: categories,
       kharkhodaCount: kharkhodaCount,
       assetByCode: assetByCode,
       imacCategories: imacCategories,
-      imacRowCount: imacRowCount
+      imacRowCount: imacRowCount,
+      vendorCategories: vendorCategories,
+      vendorRowCount: vendorRowCount
     };
   }
 
@@ -439,6 +477,15 @@
           kharkhodaCount: indexes.imacRowCount,
           categoryCount: indexes.imacCategories.length,
           categories: indexes.imacCategories
+        },
+        vendorSummary: {
+          fileName: fileName,
+          fileType: fileType,
+          sheetName: detected.sheetName,
+          headerRow: detected.headerRow + 1,
+          kharkhodaCount: indexes.vendorRowCount,
+          categoryCount: indexes.vendorCategories.length,
+          categories: indexes.vendorCategories
         }
       },
       index: {
